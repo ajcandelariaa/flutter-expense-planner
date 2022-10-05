@@ -45,7 +45,7 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   final List<Transaction> _userTransaction = [
     // Transaction(
     //   id: 't1',
@@ -61,6 +61,23 @@ class _MyHomePageState extends State<MyHomePage> {
     // ),
   ];
   bool _showChart = false;
+
+  @override
+  void initState() {
+    WidgetsBinding.instance.addObserver(this);
+    super.initState();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    print(state);
+  }
+
+  @override
+  dispose(){
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
   List<Transaction> get _recentTransactions {
     return _userTransaction.where((tx) {
@@ -155,38 +172,37 @@ class _MyHomePageState extends State<MyHomePage> {
       txListWidget
     ];
   }
-  
+
+  PreferredSizeWidget _buildAppBar() {
+    return Platform.isAndroid
+        ? AppBar(
+            title: Text('Personal Expenses'),
+            actions: [
+              IconButton(
+                  onPressed: () => _startAddNewTransaction(context),
+                  icon: Icon(Icons.add)),
+            ],
+          )
+        : CupertinoNavigationBar(
+            middle: Text('Personal Expenses'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GestureDetector(
+                  child: Icon(CupertinoIcons.add),
+                  onTap: () => _startAddNewTransaction(context),
+                )
+              ],
+            ),
+          ) as PreferredSizeWidget;
+  }
 
   @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
     final isLandscape = mediaQuery.orientation == Orientation.landscape;
-
-    var appBar;
-
-    if (Platform.isAndroid) {
-      appBar = AppBar(
-        title: Text('Personal Expenses'),
-        actions: [
-          IconButton(
-              onPressed: () => _startAddNewTransaction(context),
-              icon: Icon(Icons.add)),
-        ],
-      );
-    } else {
-      appBar = CupertinoNavigationBar(
-        middle: Text('Personal Expenses'),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            GestureDetector(
-              child: Icon(CupertinoIcons.add),
-              onTap: () => _startAddNewTransaction(context),
-            )
-          ],
-        ),
-      );
-    }
+    final dynamic  appBar = _buildAppBar();
+    
 
     final txListWidget = Container(
         height: (mediaQuery.size.height -
